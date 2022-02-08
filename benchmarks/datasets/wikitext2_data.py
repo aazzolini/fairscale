@@ -16,7 +16,9 @@ import torchtext
 from torchtext.data.utils import get_tokenizer
 from torchtext.utils import download_from_url, extract_archive
 
-if operator.ge(torchtext.__version__, LooseVersion("0.10.0")):
+_IS_LEGACY_TORCHTEXT = False
+# if operator.ge(torchtext.__version__, LooseVersion("0.10.0")):
+if False:
     from torchtext.legacy.vocab import build_vocab_from_iterator
 else:
     from torchtext.vocab import build_vocab_from_iterator
@@ -55,7 +57,13 @@ def get_real_datasets():
     train_dataset = data_process(iter(io.open(train_filepath, encoding="utf8")))
     valid_dataset = data_process(iter(io.open(valid_filepath, encoding="utf8")))
     test_dataset = data_process(iter(io.open(test_filepath, encoding="utf8")))
-    return DatasetsInfo(len(vocab.stoi), train_dataset, valid_dataset, test_dataset)
+    
+    if _IS_LEGACY_TORCHTEXT:
+        stoi_len = len(vocab.stoi)
+    else:
+        stoi_len = len(vocab.get_stoi())
+
+    return DatasetsInfo(stoi_len, train_dataset, valid_dataset, test_dataset)
 
 
 def get_dataloaders(datasets_info, benchmark_config, model_specs, num_replicas=1, rank=0):
@@ -93,7 +101,7 @@ def get_real_dataloaders(args, benchmark_config, model_specs, num_replicas=1, ra
     train_dataloader, valid_dataloader, test_dataloader = get_dataloaders(
         dataset_info, benchmark_config, model_specs, num_replicas, rank
     )
-    return dataset_info.ntokens, train_dataloader, valid_dataloder, test_dataloader
+    return dataset_info.ntokens, train_dataloader, valid_dataloader, test_dataloader
 
 
 def get_synthetic_datasets():
